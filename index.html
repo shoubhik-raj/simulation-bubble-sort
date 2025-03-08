@@ -1,0 +1,263 @@
+Below is a complete, interactive HTML simulation for the "Bubble Sort" algorithm. The simulation is designed to be educational, visually engaging, and responsive. It includes controls for users to input their own array, step through the sorting process, and visualize the algorithm in action.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bubble Sort Simulation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      color: #2c3e50;
+    }
+
+    .container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      width: 100%;
+    }
+
+    .input-section {
+      margin-bottom: 20px;
+    }
+
+    .input-section label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    .input-section input {
+      width: calc(100% - 22px);
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+
+    .input-section button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .input-section button:hover {
+      background-color: #2980b9;
+    }
+
+    .visualization {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      height: 200px;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      background-color: #ecf0f1;
+      padding: 10px;
+      border-radius: 4px;
+    }
+
+    .bar {
+      width: 20px;
+      margin: 0 2px;
+      background-color: #3498db;
+      transition: height 0.3s ease, background-color 0.3s ease;
+    }
+
+    .bar.active {
+      background-color: #e74c3c;
+    }
+
+    .bar.sorted {
+      background-color: #2ecc71;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .controls button {
+      padding: 10px 20px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .controls button:disabled {
+      background-color: #bdc3c7;
+      cursor: not-allowed;
+    }
+
+    .controls button:hover:not(:disabled) {
+      background-color: #2980b9;
+    }
+
+    .feedback {
+      margin-top: 20px;
+      text-align: center;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Bubble Sort Simulation</h1>
+  <div class="container">
+    <div class="input-section">
+      <label for="array-input">Enter numbers (comma-separated):</label>
+      <input type="text" id="array-input" placeholder="e.g., 5, 3, 8, 4, 6">
+      <button id="start-btn">Start Sorting</button>
+    </div>
+    <div class="visualization" id="visualization"></div>
+    <div class="controls">
+      <button id="prev-btn" disabled>Previous Step</button>
+      <button id="next-btn" disabled>Next Step</button>
+    </div>
+    <div class="feedback" id="feedback"></div>
+  </div>
+
+  <script>
+    // Initialize variables
+    let array = [];
+    let steps = [];
+    let currentStep = 0;
+    let isSorting = false;
+
+    // DOM elements
+    const arrayInput = document.getElementById('array-input');
+    const startBtn = document.getElementById('start-btn');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const visualization = document.getElementById('visualization');
+    const feedback = document.getElementById('feedback');
+
+    // Function to generate bars for visualization
+    function renderBars(array, activeIndices = [], sortedIndices = []) {
+      visualization.innerHTML = '';
+      array.forEach((value, index) => {
+        const bar = document.createElement('div');
+        bar.classList.add('bar');
+        bar.style.height = `${value * 10}px`;
+        if (activeIndices.includes(index)) {
+          bar.classList.add('active');
+        }
+        if (sortedIndices.includes(index)) {
+          bar.classList.add('sorted');
+        }
+        visualization.appendChild(bar);
+      });
+    }
+
+    // Function to perform bubble sort and generate steps
+    function bubbleSort(array) {
+      const steps = [];
+      let n = array.length;
+      let sortedIndices = [];
+
+      for (let i = 0; i < n - 1; i++) {
+        for (let j = 0; j < n - i - 1; j++) {
+          steps.push({ array: [...array], activeIndices: [j, j + 1], sortedIndices: [...sortedIndices] });
+          if (array[j] > array[j + 1]) {
+            [array[j], array[j + 1]] = [array[j + 1], array[j]];
+            steps.push({ array: [...array], activeIndices: [j, j + 1], sortedIndices: [...sortedIndices] });
+          }
+        }
+        sortedIndices.push(n - i - 1);
+      }
+      sortedIndices.push(0);
+      steps.push({ array: [...array], activeIndices: [], sortedIndices });
+      return steps;
+    }
+
+    // Event listener for start button
+    startBtn.addEventListener('click', () => {
+      const input = arrayInput.value.trim();
+      if (!input) {
+        alert('Please enter a valid array of numbers.');
+        return;
+      }
+
+      array = input.split(',').map(Number);
+      if (array.some(isNaN)) {
+        alert('Please enter only numbers separated by commas.');
+        return;
+      }
+
+      steps = bubbleSort(array);
+      currentStep = 0;
+      isSorting = true;
+      prevBtn.disabled = true;
+      nextBtn.disabled = false;
+      renderBars(steps[currentStep].array, steps[currentStep].activeIndices, steps[currentStep].sortedIndices);
+      feedback.textContent = 'Step 1 of ' + steps.length;
+    });
+
+    // Event listener for previous button
+    prevBtn.addEventListener('click', () => {
+      if (currentStep > 0) {
+        currentStep--;
+        renderBars(steps[currentStep].array, steps[currentStep].activeIndices, steps[currentStep].sortedIndices);
+        feedback.textContent = `Step ${currentStep + 1} of ${steps.length}`;
+        nextBtn.disabled = false;
+      }
+      if (currentStep === 0) {
+        prevBtn.disabled = true;
+      }
+    });
+
+    // Event listener for next button
+    nextBtn.addEventListener('click', () => {
+      if (currentStep < steps.length - 1) {
+        currentStep++;
+        renderBars(steps[currentStep].array, steps[currentStep].activeIndices, steps[currentStep].sortedIndices);
+        feedback.textContent = `Step ${currentStep + 1} of ${steps.length}`;
+        prevBtn.disabled = false;
+      }
+      if (currentStep === steps.length - 1) {
+        nextBtn.disabled = true;
+        feedback.textContent = 'Sorting Complete!';
+      }
+    });
+  </script>
+</body>
+</html>
+```
+
+### Features:
+1. **User Input**: Users can input a comma-separated list of numbers.
+2. **Visualization**: The array is visualized as bars, with active comparisons highlighted and sorted elements marked.
+3. **Step-by-Step Control**: Users can step through the sorting process using "Previous" and "Next" buttons.
+4. **Feedback**: The current step and total steps are displayed, along with a completion message.
+5. **Responsive Design**: The simulation is responsive and works on different screen sizes.
+
+### Instructions:
+1. Enter a comma-separated list of numbers in the input field.
+2. Click "Start Sorting" to begin the simulation.
+3. Use the "Previous" and "Next" buttons to navigate through the sorting steps.
+4. Observe the visualization and feedback to understand how Bubble Sort works.
+
+This simulation is designed to be educational, interactive, and visually engaging, making it suitable for virtual labs and self-paced learning.
